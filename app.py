@@ -1,68 +1,59 @@
-# app.py
+import os
+import json
+from flask import Flask, render_template, request
+from tensorflow.keras.models import load_model
+import numpy as np
+from tensorflow.keras.preprocessing.image import load_img, img_to_array
 
+# Paths
+MODEL_PATH = "models/model.h5"
+CLASSES_PATH = "models/classes.json"
 
-if os.path.exists(CLASSES_PATH):
-with open(CLASSES_PATH, 'r') as f:
-d = json.load(f)
-# d maps class_name -> index; invert
-class_idx_to_name = {int(v): k for k, v in d.items()}
-print('Classes:', class_idx_to_name)
-else:
-class_idx_to_name = None
+# Load model
+model = load_model(MODEL_PATH)
 
+# Load classes
+with open(CLASSES_PATH, "r") as f:
+    class_indices = json.load(f)
 
+# Reverse mapping
+classes = {v: k for k, v in class_indices.items()}
 
+# Image size must match train.py
+IMG_SIZE = 150
 
-def prepare_image(pil_img):
-pil_img = pil_img.convert('RGB')
-pil_img = pil_img.resize(IMG_SIZE)
-arr = np.array(pil_img).astype('float32') / 255.0
-arr = np.expand_dims(arr, axis=0)
-return arr
+app = Flask(__name__)
 
-
-
-
-@app.route('/')
+@app.route("/")
 def index():
-return render_template('index.html')
+    return render_template("index.html")
 
+@app.route("/predict", methods=["POST"])
+def predict():
+    if "image" not in request.files:
+        return "No file uploaded"
 
+    file = request.files["image"]
+    filepath = "static/upload.jpg"
+    file.save(filepath)
 
+    # Load image in training size
+    img = load_img(filepath, target_size=(IMG_SIZE, IMG_SIZE))
+    img = img_to_array(img) / 255.0
+    img = np.expand_dims(img, axis=0)
 
-@app.route('/upload', methods=['POST'])
-def upload():
-if 'file' not in request.files and 'image' not in request.form:
-return redirect(url_for('index'))
+    # Predict
+    preds = model.predict(img)[0]
+    class_id = np.argmax(preds)
+    confidence = preds[class_id] * 100
 
+    label = classes[class_id]
 
-# If webcam image sent as base64 in form field 'image'
-if 'image' in request.form and request.form['image']:
-data_url = request.form['image']
-header, encoded = data_url.split(',', 1)
-data = base64.b64decode(encoded)
-pil_img = Image.open(io.BytesIO(data))
-else:
-f = request.files['file']
-pil_img = Image.open(f.stream)
+    return render_template("result.html",
+                           label=label,
+                           confidence=round(confidence, 2),
+                           image_path=filepath)
 
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)
 
-x = prepare_image(pil_img)
-if model is None or class_idx_to_name is None:
-return render_template('result.html', error='Model or classes not found. Train the model first.')
-
-
-preds = model.predict(x)[0]
-idx = int(np.argmax(preds))
-prob = float(preds[idx])
-label = class_idx_to_name.get(idx, str(idx))
-
-
-return render_template('result.html', label=label, probability=round(prob, 4))
-
-
-
-
-if __name__ == '__main__':
-load_resources()
-app.run(host='0.0.0.0', port=5000, debug=True)
