@@ -2,14 +2,269 @@
 <html>
 <head>
     <title>Cow Breed Classifier</title>
+    <style>
+        /* Base styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: #333;
+        }
+        
+        /* Container for the form */
+        .container {
+            background-color: white;
+            border-radius: 20px;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+            animation: fadeIn 0.8s ease-out;
+        }
+        
+        /* Header styles */
+        h2 {
+            color: #2c3e50;
+            margin-bottom: 30px;
+            font-size: 2.2rem;
+            position: relative;
+            display: inline-block;
+        }
+        
+        h2:after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 4px;
+            background: linear-gradient(90deg, #3498db, #2ecc71);
+            border-radius: 2px;
+        }
+        
+        /* Form styles */
+        form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 25px;
+        }
+        
+        /* File input styling */
+        .file-input-container {
+            position: relative;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        
+        .file-input-container input[type="file"] {
+            position: absolute;
+            left: -9999px;
+        }
+        
+        .file-input-label {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 40px 20px;
+            border: 3px dashed #bdc3c7;
+            border-radius: 15px;
+            background-color: #f8f9fa;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .file-input-label:hover {
+            border-color: #3498db;
+            background-color: #e8f4fc;
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+        }
+        
+        .file-input-label i {
+            font-size: 50px;
+            color: #3498db;
+            margin-bottom: 15px;
+        }
+        
+        .file-input-text {
+            font-size: 18px;
+            color: #2c3e50;
+            font-weight: 500;
+        }
+        
+        .file-input-subtext {
+            font-size: 14px;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+        
+        /* Button styles */
+        button {
+            background: linear-gradient(90deg, #3498db, #2ecc71);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 18px;
+            font-weight: 600;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(52, 152, 219, 0.6);
+        }
+        
+        button:active {
+            transform: translateY(1px);
+        }
+        
+        button:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: 0.5s;
+        }
+        
+        button:hover:before {
+            left: 100%;
+        }
+        
+        /* Animation for the page */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Cow animation */
+        .cow-animation {
+            margin-top: 30px;
+            font-size: 60px;
+            animation: bounce 2s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 600px) {
+            .container {
+                padding: 30px 20px;
+            }
+            
+            h2 {
+                font-size: 1.8rem;
+            }
+            
+            .file-input-label {
+                padding: 30px 15px;
+            }
+        }
+    </style>
 </head>
 <body>
-    <h2>Upload Cow Image</h2>
+    <div class="container">
+        <h2>Upload Cow Image</h2>
+        
+        <div class="cow-animation">🐄</div>
 
-    <form action="/predict" method="POST" enctype="multipart/form-data">
-        <input type="file" name="image" required>
-        <button type="submit">Upload & Predict</button>
-    </form>
+        <form action="/predict" method="POST" enctype="multipart/form-data">
+            <div class="file-input-container">
+                <input type="file" name="image" id="image" required>
+                <label for="image" class="file-input-label">
+                    <i>📁</i>
+                    <span class="file-input-text">Choose a cow image</span>
+                    <span class="file-input-subtext">Click or drag & drop your image here</span>
+                </label>
+            </div>
+            <button type="submit">Upload & Predict</button>
+        </form>
+    </div>
 
+    <script>
+        // Add interactivity to file input
+        document.getElementById('image').addEventListener('change', function(e) {
+            const fileName = e.target.files[0] ? e.target.files[0].name : 'No file chosen';
+            document.querySelector('.file-input-text').textContent = fileName;
+            
+            // Add a little animation when file is selected
+            const label = document.querySelector('.file-input-label');
+            label.style.transform = 'scale(1.02)';
+            setTimeout(() => {
+                label.style.transform = 'scale(1)';
+            }, 200);
+        });
+        
+        // Add drag and drop functionality
+        const fileInput = document.getElementById('image');
+        const label = document.querySelector('.file-input-label');
+        
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            label.addEventListener(eventName, preventDefaults, false);
+        });
+        
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        ['dragenter', 'dragover'].forEach(eventName => {
+            label.addEventListener(eventName, highlight, false);
+        });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            label.addEventListener(eventName, unhighlight, false);
+        });
+        
+        function highlight() {
+            label.classList.add('highlight');
+            label.style.borderColor = '#3498db';
+            label.style.backgroundColor = '#e8f4fc';
+        }
+        
+        function unhighlight() {
+            label.classList.remove('highlight');
+            label.style.borderColor = '#bdc3c7';
+            label.style.backgroundColor = '#f8f9fa';
+        }
+        
+        label.addEventListener('drop', handleDrop, false);
+        
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            fileInput.files = files;
+            
+            // Trigger change event
+            const event = new Event('change');
+            fileInput.dispatchEvent(event);
+        }
+    </script>
 </body>
 </html>
